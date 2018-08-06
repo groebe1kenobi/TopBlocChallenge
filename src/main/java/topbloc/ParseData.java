@@ -8,19 +8,27 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 
 import org.json.simple.JSONObject;
@@ -143,41 +151,36 @@ public class ParseData {
 
 	public static void useJSON(ArrayList<Double> setOneArr, ArrayList<Double> setTwoArr, ArrayList<String> combinedArr)
 			throws Exception {
-		CloseableHttpClient httpClient = HttpClients.createDefault();
-		try {
-			HttpPost httpPost = new HttpPost("http://34.239.125.159:5000/challenge");
-			List<NameValuePair> postObj = new ArrayList<NameValuePair>();
+	
+		String urlStr = "http://34.239.125.159:5000/challenge";
+		//HttpClient client = HttpClientBuilder.create().build();
+		HttpClient client = HttpClients.createDefault();
+		HttpPost httpPost = new HttpPost(urlStr);
 
-			String setOneString = doubleToStr(setOneArr);
-			String setTwoString = doubleToStr(setTwoArr);
-			String wordString = arrToStr(combinedArr);
 
-			postObj.add(new BasicNameValuePair("id", "sean.groebe25@gmail.com"));
-			postObj.add(new BasicNameValuePair("numberSetOne", setOneString));
-			postObj.add(new BasicNameValuePair("numberSetTwo", setTwoString));
-			postObj.add(new BasicNameValuePair("wordSetOne", wordString));
-			httpPost.setEntity(new UrlEncodedFormEntity(postObj));
-			CloseableHttpResponse response = httpClient.execute(httpPost);
+		List<NameValuePair> postObj = new ArrayList<NameValuePair>();
 
-			try {
-				System.out.println(response.getStatusLine());
-				HttpEntity entity = response.getEntity();
+		String setOneString = doubleToStr(setOneArr);
+		String setTwoString = doubleToStr(setTwoArr);
+		String wordString = arrToStr(combinedArr);
+		
+		postObj.add(new BasicNameValuePair("id", "sean.groebe25@gmail.com"));
+		postObj.add(new BasicNameValuePair("numberSetOne", setOneString));
+		postObj.add(new BasicNameValuePair("numberSetTwo", setTwoString));
+		postObj.add(new BasicNameValuePair("wordSetOne", wordString));
+		httpPost.setEntity(new UrlEncodedFormEntity(postObj));
 
-				StringWriter out = new StringWriter();
-				((JSONObject) postObj).writeJSONString(out);
+		HttpResponse response = client.execute(httpPost);
 
-				String jsonText = out.toString();
-				System.out.print(jsonText);
-				EntityUtils.consume(entity);
-			} finally {
-				response.close();
-			}
+		System.out.println("Response Code : " + response.getStatusLine().getStatusCode());
 
-		} finally {
+		BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
-			httpClient.close();
+		StringBuffer result = new StringBuffer();
+		String line = "";
+		while ((line = rd.readLine()) != null) {
+			result.append(line);
 		}
-
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -190,10 +193,14 @@ public class ParseData {
 		ArrayList<Double> setTwoArr = divideArr(dataSet1.getNumSet2(), dataSet2.getNumSet2());
 		ArrayList<String> combinedArr = concatArr(dataSet1.getWordSet(), dataSet2.getWordSet());
 		useJSON(setOneArr, setTwoArr, combinedArr);
-
-		System.out.println(setOneArr);
-		System.out.println(setTwoArr);
-		System.out.println(combinedArr);
+//		try {
+//			DefaultHttpClient httpClient = new DefaultHttpClient();
+//			HttpPost postRequest = new HttpPost("http://34.239.125.159:5000/challenge");
+//			StringEntity input = new StringEntity("{\id\"")
+//		}
+//		System.out.println(setOneArr);
+//		System.out.println(setTwoArr);
+//		System.out.println(combinedArr);
 
 	}
 }
