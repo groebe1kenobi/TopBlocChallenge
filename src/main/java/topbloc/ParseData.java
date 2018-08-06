@@ -21,7 +21,9 @@ import org.apache.http.util.EntityUtils;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
 
+import org.json.simple.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -160,13 +162,19 @@ public class ParseData {
 			try {
 				System.out.println(response.getStatusLine());
 				HttpEntity entity = response.getEntity();
+
+				StringWriter out = new StringWriter();
+				((JSONObject) postObj).writeJSONString(out);
+
+				String jsonText = out.toString();
+				System.out.print(jsonText);
 				EntityUtils.consume(entity);
 			} finally {
 				response.close();
 			}
 
 		} finally {
-			System.out.println("Do");
+
 			httpClient.close();
 		}
 
