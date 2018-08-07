@@ -28,7 +28,7 @@ public class ParseData {
 
 	private static Data createDataObject(String filePath) throws IOException {
 
-		Data newDataSet = null; // Create data object to be returned
+		Data newDataSet = null;
 		ArrayList<Double> num1 = new ArrayList<Double>();
 		ArrayList<Double> num2 = new ArrayList<Double>();
 		ArrayList<String> words = new ArrayList<String>();
