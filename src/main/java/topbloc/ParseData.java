@@ -1,36 +1,28 @@
 package topbloc;
 
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.apache.http.HttpResponse;
 
 import org.apache.http.client.HttpClient;
 
-
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
+
 import org.apache.http.entity.StringEntity;
 
 import org.apache.http.impl.client.HttpClientBuilder;
-
-
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-
-
 import java.util.ArrayList;
 import java.util.Iterator;
-
-
 
 public class ParseData {
 
@@ -95,82 +87,53 @@ public class ParseData {
 		return newDataSet;
 	}
 
-	public static ArrayList<Double> multiplyArr(ArrayList<Double> arr1, ArrayList<Double> arr2) {
-		ArrayList<Double> multArr = new ArrayList<Double>();
+	public static Double[] multiplyArr(ArrayList<Double> arr1, ArrayList<Double> arr2) {
+		Double[] multArr = new Double[arr1.size()];
 		for (int i = 0; i < arr1.size(); i++) {
 			Double newNum = arr1.get(i) * arr2.get(i);
-			multArr.add(newNum);
+			multArr[i] = newNum;
 		}
 
 		return multArr;
 	}
 
-	public static ArrayList<Double> divideArr(ArrayList<Double> arr1, ArrayList<Double> arr2) {
-		ArrayList<Double> divArr = new ArrayList<Double>();
+	public static Double[] divideArr(ArrayList<Double> arr1, ArrayList<Double> arr2) {
+		Double[] divArr = new Double[arr1.size()];
 		for (int i = 0; i < arr1.size(); i++) {
 			Double newNum = arr2.get(i) / arr1.get(i);
-			divArr.add(newNum);
+			divArr[i] = newNum;
 		}
 
 		return divArr;
 	}
 
-	public static ArrayList<String> concatArr(ArrayList<String> arr1, ArrayList<String> arr2) {
-		ArrayList<String> catArr = new ArrayList<String>();
+	public static String[] concatArr(ArrayList<String> arr1, ArrayList<String> arr2) {
+		String[] catArr = new String[arr1.size()];
 		for (int i = 0; i < arr1.size(); i++) {
 			String concatString = arr1.get(i) + " " + arr2.get(i);
-			catArr.add(concatString);
+			catArr[i] = concatString;
 		}
 
 		return catArr;
 	}
 
-	// Helper methods to allow Array members to be transferred into strings
-	public static String doubleToStr(ArrayList<Double> array) {
-		StringBuilder setString = new StringBuilder();
-		for (Double s : array) {
-			setString.append(s.toString());
-			setString.append("\t");
+	public static void useJSON(JSONObject data) {
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost post = new HttpPost("http://34.239.125.159:5000/challenge");
+			StringEntity jsonEntity = new StringEntity(data.toString());
+			post.setEntity(jsonEntity);
+			post.setHeader("Content-type", "application/json");
+			HttpResponse response = client.execute(post);
+			System.out.println(response.toString());
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+			return;
 		}
-		return setString.toString();
 	}
-
-	public static String arrToStr(ArrayList<String> array) {
-		StringBuilder setString = new StringBuilder();
-		for (String s : array) {
-			setString.append(s.toString());
-			setString.append("\t");
-		}
-		return setString.toString();
-
-	}
-
-	public static void useJSON(ArrayList<Double> setOneArr, ArrayList<Double> setTwoArr, ArrayList<String> combinedArr)
-			throws Exception {
-
-		String urlStr = "http://34.239.125.159:5000/challenge";
-
-	
-		String setOneString = doubleToStr(setOneArr);
-		String setTwoString = doubleToStr(setTwoArr);
-		String wordString = arrToStr(combinedArr);
-
-		StringEntity postObj = createEntity(setOneString, setTwoString, wordString);
-
-		HttpClient client = HttpClientBuilder.create().build();
-		HttpPost request = new HttpPost(urlStr);
-		request.setEntity(postObj);
-		HttpResponse response = client.execute(request);
-		System.out.println(response.getStatusLine().getStatusCode());
-	}
-
-	public static StringEntity createEntity(String numSet1, String numSet2, String wordSet1) {
-		String postData = "data={" + "\"id\": \"sean.groebe25@gmail.com\", " + "\"numberSetOne\": \"" + numSet1 + "\", "
-				+ "\"numberSetTwo\": \"" + numSet2 + "\", " + "\"wordSetOne\": \"" + wordSet1 + "\"" + "}";
-		StringEntity entity = new StringEntity(postData, ContentType.APPLICATION_FORM_URLENCODED);
-		return entity;
-	}
-
 
 	public static void main(String[] args) throws Exception {
 		String filePath1 = "/Users/Groebe_1/Documents/workspaceSG/topbloc/src/main/resources/Data1.xlsx";
@@ -178,11 +141,25 @@ public class ParseData {
 		Data dataSet1 = createDataObject(filePath1);
 		Data dataSet2 = createDataObject(filePath2);
 
-		ArrayList<Double> setOneArr = multiplyArr(dataSet1.getNumSet1(), dataSet2.getNumSet1());
-		ArrayList<Double> setTwoArr = divideArr(dataSet1.getNumSet2(), dataSet2.getNumSet2());
-		ArrayList<String> combinedArr = concatArr(dataSet1.getWordSet(), dataSet2.getWordSet());
-		useJSON(setOneArr, setTwoArr, combinedArr);
-		
+		Double[] setOneArr = multiplyArr(dataSet1.getNumSet1(), dataSet2.getNumSet1());
+		Double[] setTwoArr = divideArr(dataSet1.getNumSet2(), dataSet2.getNumSet2());
+		String[] combinedArr = concatArr(dataSet1.getWordSet(), dataSet2.getWordSet());
+
+		JSONObject jObj = new JSONObject();
+		jObj.put("id", "sean.groebe25@gmail.com");
+		JSONArray numSet1 = new JSONArray();
+		JSONArray numSet2 = new JSONArray();
+		JSONArray wordSet1 = new JSONArray();
+		for (int i = 0; i < setOneArr.length; i++) {
+			numSet1.add(setOneArr[i]);
+			numSet2.add(setTwoArr[i]);
+			wordSet1.add(combinedArr[i]);
+		}
+		jObj.put("numberSetOne", numSet1);
+		jObj.put("numberSetTwo", numSet2);
+		jObj.put("wordSetOne", wordSet1);
+
+		useJSON(jObj);
 
 	}
 }
